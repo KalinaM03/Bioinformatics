@@ -1,18 +1,18 @@
 # BioMed File Registry (MVP)
 
-Лек, реално работещ инструмент за **регистър + индексатор** на големи биомедицински файлове.
-Работи **само с метаданни** (не качва файловете и не чете съдържанието им целиком).
+A lightweight, fully functional tool for a **registry + indexer** of large biomedical files.  
+Works **only with metadata** (does not upload files and does not read their full content).
 
-## Какво прави
-- Импорт (сканиране) на папка рекурсивно
-- Разпознаване на тип файл (FASTQ/FASTA/VCF/DICOM/CSV/TSV/JSON/XML/PDF/NIFTI/...)
-- Извличане на **леки** метаданни според типа (header/columns/DICOM tags без пиксели)
-- Индексиране в SQLite (локално)
-- Търсене/филтри/сортиране през UI и REST API
-- Експорт (CSV/JSON)
- - (Ново) По желание: **пълнотекстово търсене в съдържание** за текстови формати (SQLite FTS5)
+## What it does
+- Import (recursive scan) of a folder
+- File type detection (FASTQ/FASTA/VCF/DICOM/CSV/TSV/JSON/XML/PDF/NIFTI/...)
+- Extraction of **lightweight** metadata by type (headers/columns/DICOM tags without pixels)
+- Indexing into SQLite (local)
+- Search/filter/sort via UI and REST API
+- Export (CSV/JSON)
+- (New, optional): **full-text search in content** for text-based formats (SQLite FTS5)
 
-## Стартиране
+## Getting started
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate
@@ -20,16 +20,16 @@ python -m venv .venv
 
 pip install -r requirements.txt
 uvicorn app.main:app --reload
-```
 
-Отвори:
+Open:
 - UI: http://127.0.0.1:8000
 - Swagger: http://127.0.0.1:8000/docs
 
-## Бележки
-- База данни: `biomed_registry.db` (в проекта)
-- Индексиране: от „Начало“ → „Индексирай папка“
-- За DICOM използва `pydicom` с `stop_before_pixels=True`, за да не зарежда пиксели.
-- Пълнотекстовото търсене индексира само **ограничена част** от файловете (първите N байта/реда),
-   за да е бързо и безопасно за големи файлове. Контролира се чрез env:
-   `BIOMED_FTS_ENABLED`, `BIOMED_FTS_MAX_BYTES`, `BIOMED_FTS_FASTQ_MAX_LINES`.
+## Notes
+- Database: biomed_registry.db (in the project root)
+- Indexing: from “Home” → “Index folder.”
+- For DICOM, it uses pydicom with stop_before_pixels=True to avoid loading pixel data.
+
+Full-text search indexes only a limited portion of files (first N bytes/lines)
+to remain fast and safe for large files. Controlled via env vars:
+BIOMED_FTS_ENABLED, BIOMED_FTS_MAX_BYTES, BIOMED_FTS_FASTQ_MAX_LINES.
