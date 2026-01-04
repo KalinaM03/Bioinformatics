@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <h2 style="margin:0 0 10px 0;">Търсене</h2>
+  <form method="get" action="/files">
+    <div class="grid">
+      <div>
+        <label class="muted">Текст (име/път/проект/проба/пациент/метаданни)</label>
+        <input name="q" value="{{ q }}" placeholder="пример: GRCh38 или tumor или CT">
+      </div>
+      <div>
+        <label class="muted">Тип (по желание)</label>
+        <input name="file_type" value="{{ file_type }}" placeholder="пример: VCF,FASTQ,DICOM">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label class="muted">Търсене в съдържание (FTS)</label>
+        <input name="content_q" value="{{ content_q }}" placeholder="пример: hemoglobin human tumor">
+        <div class="muted small" style="margin-top:6px;">
+          Индексира се само ограничен текст от файловете (първите N байта/реда) за бързина.
+        </div>
+      </div>
+      <div>
+        <label class="muted">&nbsp;</label>
+        <div class="muted small" style="padding:10px 0 0 0;">
+          Съвет: за фраза използвай кавички, напр. "Homo sapiens".
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label class="muted">Мин. размер (MB)</label>
+        <input name="min_mb" value="{{ min_mb }}" placeholder="пример: 10">
+      </div>
+      <div>
+        <label class="muted">Макс. размер (MB)</label>
+        <input name="max_mb" value="{{ max_mb }}" placeholder="пример: 5000">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label class="muted">След дата (YYYY-MM-DD)</label>
+        <input name="after" value="{{ after }}" placeholder="пример: 2025-01-01">
+      </div>
+      <div>
+        <label class="muted">Преди дата (YYYY-MM-DD)</label>
+        <input name="before" value="{{ before }}" placeholder="пример: 2025-12-31">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label class="muted">Проект</label>
+        <input name="project" value="{{ project }}" placeholder="пример: StudyA">
+      </div>
+      <div>
+        <label class="muted">Проба (Sample ID)</label>
+        <input name="sample_id" value="{{ sample_id }}" placeholder="пример: S-001">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label class="muted">Пациент (псевдо-ID)</label>
+        <input name="patient" value="{{ patient }}" placeholder="пример: P-123">
+      </div>
+      <div>
+        <label class="muted">Сортиране</label>
+        <select name="sort">
+          <option value="mtime_desc" {% if sort == 'mtime_desc' %}selected{% endif %}>по дата (нови първи)</option>
+          <option value="mtime_asc" {% if sort == 'mtime_asc' %}selected{% endif %}>по дата (стари първи)</option>
+          <option value="size_desc" {% if sort == 'size_desc' %}selected{% endif %}>по размер (големи първи)</option>
+          <option value="size_asc" {% if sort == 'size_asc' %}selected{% endif %}>по размер (малки първи)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label class="muted">Таг (може няколко, разделени със запетая)</label>
+        <input name="tags" value="{{ tags }}" placeholder="пример: tumor,wgs">
+      </div>
+      <div>
+        <label class="muted">Само дубликати</label>
+        <select name="duplicates_only">
+          <option value="false" {% if not duplicates_only %}selected{% endif %}>не</option>
+          <option value="true" {% if duplicates_only %}selected{% endif %}>да</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="height:10px"></div>
+    <button type="submit">Търси</button>
+
+    <div class="muted" style="margin-top:10px;">
+      Експорт на текущия филтър:
+      <a href="{{ export_csv_url }}">CSV</a> · <a href="{{ export_json_url }}">JSON</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="row">
+    <h2 style="margin:0;">Резултати</h2>
+    <div class="right muted">{{ total }} общо · страница {{ page }}/{{ pages }}</div>
+  </div>
+
+  {% if items|length == 0 %}
+    <div class="muted">Няма съвпадения.</div>
+  {% else %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Файл</th>
+          <th>Тип</th>
+          <th class="right">Размер</th>
+          <th>Етикети</th>
+          <th>Промяна (UTC)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in items %}
+          <tr>
+            <td>
+              <a href="/files/{{ f.id }}"><b>{{ f.filename }}</b></a>
+              <div class="muted">{{ f.path }}</div>
+              <div class="muted small" style="margin-top:6px;">
+                {% if f.project %}Проект: <b>{{ f.project }}</b>{% endif %}
+                {% if f.sample_id %} · Проба: <b>{{ f.sample_id }}</b>{% endif %}
+                {% if f.patient_pseudo_id %} · Пациент: <b>{{ f.patient_pseudo_id }}</b>{% endif %}
+                {% if not f.project and not f.sample_id and not f.patient_pseudo_id %}-{% endif %}
+              </div>
+            </td>
+            <td>
+              <span class="badge">{{ f.file_type }}</span>
+              {% if f.is_duplicate %} <span class="badge">дубликат</span>{% endif %}
+            </td>
+            <td class="right">{{ (f.size_bytes / (1024*1024))|round(2) }} MB</td>
+            <td>
+              {% if f.tags|length == 0 %}
+                <span class="muted">-</span>
+              {% else %}
+                {% for t in f.tags %}<span class="pill">{{ t.name }}</span>{% endfor %}
+              {% endif %}
+            </td>
+            <td>{{ f.mtime_utc }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="row" style="margin-top:12px;">
+      <div>
+        {% if page > 1 %}
+          <a class="badge" href="{{ prev_url }}">← Назад</a>
+        {% endif %}
+      </div>
+      <div class="right">
+        {% if page < pages %}
+          <a class="badge" href="{{ next_url }}">Напред →</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

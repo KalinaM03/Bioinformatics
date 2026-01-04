@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <h2 style="margin:0 0 6px 0;">{{ file.filename }}</h2>
+  <div class="muted">{{ file.path }}</div>
+  <div style="margin-top:10px;">
+    <span class="badge">{{ file.file_type }}</span>
+    {% if file.is_duplicate %}<span class="badge">дубликат</span>{% endif %}
+    <span class="badge">{{ (file.size_bytes / (1024*1024))|round(2) }} MB</span>
+    <span class="badge">Промяна {{ file.mtime_utc }}</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h3 style="margin:0 0 10px 0;">Попълни метаданни (лесно)</h3>
+    <form data-fields-form data-file-id="{{ file.id }}">
+      <label class="muted">Проект</label>
+      <input name="project" value="{{ file.project or '' }}" placeholder="пример: StudyA">
+      <div style="height:10px"></div>
+
+      <label class="muted">Проба (Sample ID)</label>
+      <input name="sample_id" value="{{ file.sample_id or '' }}" placeholder="пример: S-001">
+      <div style="height:10px"></div>
+
+      <label class="muted">Пациент (псевдо-ID)</label>
+      <input name="patient_pseudo_id" value="{{ file.patient_pseudo_id or '' }}" placeholder="пример: P-123">
+      <div style="height:10px"></div>
+
+      <button type="submit">Запази</button>
+      <div class="muted" data-fields-msg style="margin-top:8px;"></div>
+    </form>
+
+    <div class="muted small" style="margin-top:10px;">
+      Важно: не въвеждай реални лични данни. Ползвай псевдо идентификатори.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 10px 0;">Етикети</h3>
+    {% if file.tags|length == 0 %}
+      <div class="muted">Няма етикети.</div>
+    {% else %}
+      <div>
+        {% for t in file.tags %}<span class="pill">{{ t.name }}</span>{% endfor %}
+      </div>
+    {% endif %}
+
+    <div style="height:10px"></div>
+    <form data-tags-form data-file-id="{{ file.id }}">
+      <label class="muted">Добави/замени етикети (разделени със запетая)</label>
+      <input name="tags" placeholder="пример: tumor,wgs,vcf">
+      <div style="height:10px"></div>
+      <button type="submit">Запази етикети</button>
+      <div class="muted" data-tags-msg style="margin-top:8px;"></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin:0 0 10px 0;">Автоматично извлечени метаданни</h3>
+  {% if file.metadata %}
+    <pre style="white-space:pre-wrap; background:#0b1224; border:1px solid #24324f; padding:12px; border-radius:12px;">{{ file.metadata | tojson(indent=2) }}</pre>
+  {% else %}
+    <div class="muted">Няма извлечени метаданни за този тип файл.</div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3 style="margin:0 0 10px 0;">Технически детайли</h3>
+  <table class="table">
+    <tr><th>SHA-256</th><td class="muted">{{ file.sha256 or "-" }} <span class="badge">{{ file.hash_mode }}</span></td></tr>
+    <tr><th>Създаден (UTC)</th><td class="muted">{{ file.ctime_utc }}</td></tr>
+    <tr><th>Обновен в индекс (UTC)</th><td class="muted">{{ file.updated_at_utc }}</td></tr>
+  </table>
+</div>
+
+{% endblock %}

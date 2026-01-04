@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <div class="row">
+    <h2 style="margin:0;">Индексиране</h2>
+    <div class="right muted" data-jobs-status>Обновяване…</div>
+  </div>
+  <div class="muted">Страницата се обновява автоматично (на ~2.5 секунди).</div>
+</div>
+
+<div class="card">
+  {% if jobs|length == 0 %}
+    <div class="muted">Няма стартирани задачи.</div>
+  {% else %}
+  <table class="table" data-jobs-table>
+    <thead>
+      <tr>
+        <th>Стартирана</th>
+        <th>Папка</th>
+        <th>Режим</th>
+        <th>Статус</th>
+        <th class="right">Видени</th>
+        <th class="right">Нови</th>
+        <th class="right">Обновени</th>
+        <th class="right">Грешки</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for j in jobs %}
+        <tr>
+          <td>{{ j.created_at_utc }}</td>
+          <td>{{ j.folder }}</td>
+          <td><span class="badge">{{ j.hash_mode }}</span></td>
+          <td>
+            <span class="badge">{{ j.status }}</span>
+            {% if j.error_message %}<div class="muted danger">{{ j.error_message }}</div>{% endif %}
+          </td>
+          <td class="right">{{ j.files_seen }}</td>
+          <td class="right">{{ j.files_indexed }}</td>
+          <td class="right">{{ j.files_updated }}</td>
+          <td class="right">{{ j.files_failed }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+{% endblock %}

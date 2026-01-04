@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <h2 style="margin:0 0 8px 0;">Как се ползва</h2>
+  <div class="grid">
+    <div class="hint">
+      <div class="kpi"><b>1</b><div><b>Избери папка</b><div class="muted">Папката е на компютъра, където стартираш програмата.</div></div></div>
+    </div>
+    <div class="hint">
+      <div class="kpi"><b>2</b><div><b>Индексирай</b><div class="muted">Записват се само метаданни. Файловете не се качват.</div></div></div>
+    </div>
+  </div>
+  <div class="hint" style="margin-top:10px;">
+    <div class="kpi"><b>3</b><div><b>Търси</b><div class="muted">В „Търсене“ филтрираш по тип, размер, дата и метаданни.</div></div></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2 style="margin:0 0 10px 0;">Индексирай папка</h2>
+    <form method="post" action="/scan">
+      <label class="muted">Път до папка</label>
+      <input name="folder" placeholder="C:\data\biomed  или  /home/user/biomed" required>
+      <div style="height:10px"></div>
+
+      <label class="muted">Откриване на дубликати</label>
+      <select name="hash_mode">
+        <option value="quick" selected>Бърз (препоръчително)</option>
+        <option value="none">Без проверка</option>
+        <option value="full">Пълен SHA-256 (по-бавно)</option>
+      </select>
+
+      <div style="height:10px"></div>
+      <button type="submit">Старт</button>
+
+      <div class="muted small" style="margin-top:10px;">
+        Прогресът се вижда в „Индексиране“.
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 10px 0;">Обобщение</h2>
+    {% if summary|length == 0 %}
+      <div class="muted">Още няма индексирани файлове.</div>
+    {% else %}
+    <table class="table">
+      <thead><tr><th>Тип</th><th class="right">Брой</th><th class="right">Размер</th></tr></thead>
+      <tbody>
+        {% for s in summary %}
+          <tr>
+            <td><span class="badge">{{ s.file_type }}</span></td>
+            <td class="right">{{ s.count }}</td>
+            <td class="right">{{ (s.total_size / (1024*1024))|round(2) }} MB</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="row">
+    <h2 style="margin:0;">Последни файлове</h2>
+    <div class="right"><a href="/files">Търси →</a></div>
+  </div>
+  {% if recent|length == 0 %}
+    <div class="muted">Няма индексирани файлове.</div>
+  {% else %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Файл</th>
+        <th>Тип</th>
+        <th class="right">Размер</th>
+        <th>Промяна (UTC)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in recent %}
+        <tr>
+          <td>
+            <a href="/files/{{ f.id }}"><b>{{ f.filename }}</b></a>
+            <div class="muted">{{ f.path }}</div>
+          </td>
+          <td>
+            <span class="badge">{{ f.file_type }}</span>
+            {% if f.is_duplicate %}<span class="badge">дубликат</span>{% endif %}
+          </td>
+          <td class="right">{{ (f.size_bytes / (1024*1024))|round(2) }} MB</td>
+          <td>{{ f.mtime_utc }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+{% endblock %}
